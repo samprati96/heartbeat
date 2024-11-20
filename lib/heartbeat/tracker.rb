@@ -10,6 +10,10 @@ module Heartbeat
     end
 
     def update_node_heartbeat(node)
+      # Remove outdated entries
+      @min_heap.delete_if { |entry| entry[:node] == node }
+      
+      # Push updated entry
       node.update_heartbeat
       @min_heap.push({ node: node, last_heartbeat: node.last_heartbeat })
     end
@@ -27,16 +31,6 @@ module Heartbeat
           # Otherwise, mark the node as inactive and increment retries
           node.timeout! if node.aasm_state != :inactive
           node.increment_retries
-        end
-      end
-    end
-
-    def reassign_task_if_needed
-      @min_heap.each do |entry|
-        node = entry[:node]
-        if node.aasm_state == :failed
-          # Logic for task reassignment (not implemented here)
-          puts "Reassigning task from node #{node.name}."
         end
       end
     end

@@ -16,6 +16,11 @@ module Heartbeat
 
         event :fail do
           transitions from: :active, to: :failed
+
+          # Add a callback to notify about failure
+          after do
+            notify_failure(self)
+          end
         end
 
         event :timeout do
@@ -23,5 +28,20 @@ module Heartbeat
         end
       end
     end
+
+    def notify_failure(node)
+      if Heartbeat.failure_callback
+        Heartbeat.failure_callback.call(node)
+      else
+        Heartbeat.logger.error("No failure callback defined. Node '#{node.name}' has failed.")
+      end
+
+      if Heartbeat.notifiers.empty?
+        Heartbeat.logger.warn("No notifiers configured. Failed node '#{node.name}' notification skipped.")
+      else
+        Heartbeat.notifiers.each { |notifier| notifier.notify_with_retries(node) }
+      end
+    end
+
   end
 end

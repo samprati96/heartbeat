@@ -9,7 +9,6 @@ module Heartbeat
     def initialize(name)
       @name = name
       @last_heartbeat = Time.now
-      @state = :active
       @retries = 0
     end
 
